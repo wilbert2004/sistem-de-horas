@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-900 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Horas - Prácticas Profesionales</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="h-full antialiased font-sans flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-30 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 rounded-xl">
+                    <i class="fa-solid fa-user-graduate text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                        Prácticas Profesionales
+                        <span class="text-[10px] uppercase font-extrabold tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">Control de Horas</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Desde el 28 de Agosto hasta la actualidad</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="openRetroactiveModal()" class="text-xs font-semibold px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-indigo-600/20">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span class="hidden sm:inline">Rellenar</span> Historial Retroactivo
+                </button>
+                <div class="h-4 w-[1px] bg-slate-800 hidden sm:block"></div>
+                <button onclick="exportToCSV()" class="text-xs font-semibold px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <span>Exportar Excel</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Banner Metas y Progreso -->
+        <div class="glass-panel rounded-2xl p-6 relative overflow-hidden">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
+                
+                <div class="md:col-span-2 space-y-2">
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Progreso Total de Prácticas</span>
+                        <button onclick="openTargetModal()" class="text-xs text-indigo-400 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-pen-to-square text-[10px]"></i> Ajustar Meta
+                        </button>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <span id="total-completed-hours" class="text-4xl font-black font-mono text-white">0.0</span>
+                        <span id="target-hours-display" class="text-lg font-medium text-slate-400">/ 480.0 hrs</span>
+                        <span id="progress-percentage-badge" class="ml-2 text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">0%</span>
+                    </div>
+                    
+                    <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+                        <div id="target-progress-bar" class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800/80 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-slate-400 block">Horas Restantes</span>
+                        <span id="remaining-hours-display" class="text-2xl font-bold font-mono text-amber-400">480.0 h</span>
+                    </div>
+                    <div class="p-3 bg-amber-500/10 text-amber-400 rounded-lg">
+                        <i class="fa-solid fa-hourglass-half text-xl"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800/80 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-slate-400 block">Días Cumplidos</span>
+                        <span id="total-days-worked" class="text-2xl font-bold font-mono text-emerald-400">0 días</span>
+                    </div>
+                    <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                        <i class="fa-solid fa-calendar-check text-xl"></i>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Panel de Marcación en Tiempo Real -->
+            <div class="lg:col-span-2 glass-panel rounded-2xl p-6 flex flex-col justify-between space-y-6">
+                
+                <div class="flex justify-between items-start border-b border-slate-800 pb-4">
+                    <div>
+                        <p id="live-date" class="text-xs font-semibold uppercase tracking-wider text-slate-400">Cargando fecha...</p>
+                        <h2 id="live-clock" class="text-4xl sm:text-5xl font-black font-mono text-white tracking-tight mt-1">00:00:00</h2>
+                    </div>
+                    <div id="status-badge" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+                        Sin jornada activa hoy
+                    </div>
+                </div>
+
+                <!-- Botones de Marcación -->
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-3">Registro Hoy (Sincronizado con Hora de Computadora)</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        
+                        <button id="btn-checkin" onclick="registerLiveAction('checkin')" class="p-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group">
+                            <i class="fa-solid fa-play text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="font-bold text-sm">Marcar Entrada</span>
+                            <span id="disp-checkin-time" class="text-[11px] font-mono opacity-80 mt-0.5">--:--</span>
+                        </button>
+
+                        <button id="btn-lunch" onclick="toggleLiveLunch()" disabled class="p-4 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white rounded-xl shadow-lg shadow-amber-600/20 transition-all flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group">
+                            <i id="icon-lunch" class="fa-solid fa-utensils text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span id="label-lunch" class="font-bold text-sm">Inicio Almuerzo</span>
+                            <span id="disp-lunch-time" class="text-[11px] font-mono opacity-80 mt-0.5">--:--</span>
+                        </button>
+
+                        <button id="btn-checkout" onclick="registerLiveAction('checkout')" disabled class="p-4 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white rounded-xl shadow-lg shadow-rose-600/20 transition-all flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed group">
+                            <i class="fa-solid fa-stop text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="font-bold text-sm">Marcar Salida</span>
+                            <span id="disp-checkout-time" class="text-[11px] font-mono opacity-80 mt-0.5">--:--</span>
+                        </button>
+
+                    </div>
+                </div>
+
+                <!-- Resumen en vivo hoy -->
+                <div class="pt-4 border-t border-slate-800 grid grid-cols-3 gap-2 text-center text-xs font-mono">
+                    <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-sans">Trabajado Hoy</span>
+                        <span id="live-today-worked" class="text-sm font-bold text-white">00:00</span>
+                    </div>
+                    <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-sans">Descanso Hoy</span>
+                        <span id="live-today-lunch" class="text-sm font-bold text-slate-300">00:00</span>
+                    </div>
+                    <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-sans">Extra Hoy (>8h)</span>
+                        <span id="live-today-overtime" class="text-sm font-bold text-indigo-400">00:00</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Panel de Acciones Manuales y Respaldo -->
+            <div class="glass-panel rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-indigo-400"></i> Herramientas Rápidas
+                    </h3>
+                    
+                    <div class="space-y-2.5">
+                        <button onclick="openManualModal()" class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 flex items-center justify-between transition">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-calendar-plus text-indigo-400"></i> Añadir/Editar Día Individual</span>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-slate-500"></i>
+                        </button>
+
+                        <button onclick="openRetroactiveModal()" class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 flex items-center justify-between transition">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Generar Historial (28 Ago - Oct)</span>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-slate-500"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800 space-y-2.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Copias de Seguridad</span>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="exportJSONBackup()" class="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg border border-slate-700 flex items-center justify-center gap-1.5 transition">
+                            <i class="fa-solid fa-download text-slate-400"></i> Resp. JSON
+                        </button>
+                        <button onclick="triggerImportJSON()" class="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg border border-slate-700 flex items-center justify-center gap-1.5 transition">
+                            <i class="fa-solid fa-upload text-slate-400"></i> Rest. JSON
+                        </button>
+                        <input type="file" id="json-input" accept=".json" class="hidden" onchange="importJSONBackup(event)">
+                    </div>
+
+                    <button onclick="confirmClearAll()" class="w-full py-2 px-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition">
+                        <i class="fa-solid fa-trash-can"></i> Limpiar Todo el Historial
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Tabla de Historial -->
+        <div class="glass-panel rounded-2xl overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i> Historial Completo de Asistencia
+                    </h3>
+                    <p class="text-xs text-slate-400">Todos tus días registrados ordenados cronológicamente</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="table-search" oninput="filterTable()" placeholder="Buscar por fecha..." class="pl-8 pr-3 py-1.5 text-xs bg-slate-950/80 border border-slate-800 text-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 w-44">
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs sm:text-sm text-slate-300">
+                    <thead class="bg-slate-900/90 text-slate-400 uppercase tracking-wider text-[11px] font-bold border-b border-slate-800">
+                        <tr>
+                            <th class="py-3.5 px-4">Fecha</th>
+                            <th class="py-3.5 px-4">Día</th>
+                            <th class="py-3.5 px-4">Entrada</th>
+                            <th class="py-3.5 px-4">Almuerzo</th>
+                            <th class="py-3.5 px-4">Salida</th>
+                            <th class="py-3.5 px-4 text-center">Horas Totales</th>
+                            <th class="py-3.5 px-4 text-center">Horas Extra</th>
+                            <th class="py-3.5 px-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-tbody" class="divide-y divide-slate-800/60 font-mono text-xs">
+                        <!-- Carga dinámica -->
+                    </tbody>
+                </table>
+                
+                <div id="empty-state" class="hidden py-12 text-center text-slate-500 font-sans">
+                    <i class="fa-solid fa-folder-open text-4xl mb-2 text-slate-600"></i>
+                    <p class="text-sm font-medium">No hay registros almacenados.</p>
+                    <p class="text-xs text-slate-500 mt-1">Usa el botón "Rellenar Historial Retroactivo" para generar tus días de prácticas automáticamente desde el 28 de Agosto.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL 1: Generador Retroactivo Automático -->
+    <div id="retroactive-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 bg-indigo-950/60 border-b border-indigo-900/50 flex justify-between items-center">
+                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Generar Historial Retroactivo de Prácticas
+                </h3>
+                <button onclick="closeRetroactiveModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form onsubmit="handleRetroactiveGenerate(event)" class="p-6 space-y-4 font-sans text-xs">
+                <p class="text-slate-400 leading-relaxed">
+                    Esta herramienta rellenará tu historial automáticamente con todos los días laborables (de Lunes a Viernes) dentro del rango especificado.
+                </p>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Fecha de Inicio</label>
+                        <input type="date" id="retro-start-date" value="2026-08-28" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Fecha Final</label>
+                        <input type="date" id="retro-end-date" value="2026-10-01" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Hora Entrada Típica</label>
+                        <input type="time" id="retro-checkin" value="08:00" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Hora Salida Típica</label>
+                        <input type="time" id="retro-checkout" value="14:00" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Inicio Almuerzo (Opcional)</label>
+                        <input type="time" id="retro-lunch-start" value="" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Fin Almuerzo (Opcional)</label>
+                        <input type="time" id="retro-lunch-end" value="" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-start gap-2.5 text-indigo-300 text-[11px]">
+                    <i class="fa-solid fa-circle-info text-indigo-400 mt-0.5"></i>
+                    <span>Excluye automáticamente sábados y domingos. Si ya existen registros en alguna fecha, serán preservados o actualizados sin duplicarse.</span>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="closeRetroactiveModal()" class="px-4 py-2 border border-slate-700 text-slate-300 rounded-lg font-semibold hover:bg-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-500 flex items-center gap-1.5 shadow-lg shadow-indigo-600/30">
+                        <i class="fa-solid fa-bolt"></i> Generar Historial
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Edición Manual de Día Individual -->
+    <div id="manual-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex justify-between items-center">
+                <h3 id="manual-modal-title" class="font-bold text-white text-sm">Registro Manual de Día</h3>
+                <button onclick="closeManualModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form onsubmit="handleManualSave(event)" class="p-6 space-y-4 font-sans text-xs">
+                <input type="hidden" id="edit-id">
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Fecha</label>
+                    <input type="date" id="manual-date" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Hora Entrada</label>
+                        <input type="time" id="manual-checkin" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Hora Salida</label>
+                        <input type="time" id="manual-checkout" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Inicio Almuerzo</label>
+                        <input type="time" id="manual-lunch-start" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Fin Almuerzo</label>
+                        <input type="time" id="manual-lunch-end" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="closeManualModal()" class="px-4 py-2 border border-slate-700 text-slate-300 rounded-lg font-semibold hover:bg-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-500">Guardar Día</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Ajuste Meta de Horas -->
+    <div id="target-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full shadow-2xl p-6 font-sans space-y-4">
+            <h3 class="font-bold text-white text-sm">Ajustar Meta de Horas de Prácticas</h3>
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Total de Horas Requeridas</label>
+                <input type="number" id="target-hours-input" min="1 flex" step="10" value="480" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeTargetModal()" class="px-4 py-2 border border-slate-700 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-800">Cancelar</button>
+                <button onclick="saveTargetHours()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-500">Guardar Meta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-800 text-white border border-slate-700 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none font-sans text-xs">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span id="toast-message">Acción completada con éxito</span>
+    </div>
+
+    <!-- SCRIPT PRINCIPAL DE LÓGICA -->
+    <script>
+        // Estado de la aplicación
+        let attendanceRecords = JSON.parse(localStorage.getItem('internshipRecords')) || [];
+        let activeRecord = JSON.parse(localStorage.getItem('internshipActiveRecord')) || null;
+        let targetHours = parseFloat(localStorage.getItem('internshipTargetHours')) || 480;
+
+        const DAYS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initClock();
+            renderAll();
+        });
+
+        // 1. RELOJ EN TIEMPO REAL
+        function initClock() {
+            const updateTime = () => {
+                const now = new Date();
+                
+                // Formatear Fecha
+                const dateOpts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const formattedDate = now.toLocaleDateString('es-ES', dateOpts);
+                document.getElementById('live-date').innerText = formattedDate;
+
+                // Formatear Hora
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const s = String(now.getSeconds()).padStart(2, '0');
+                document.getElementById('live-clock').innerText = `${h}:${m}:${s}`;
+
+                if (activeRecord) {
+                    calculateLiveMetrics(now);
+                }
+            };
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
+
+        // 2. REGISTRO EN VIVO CON BOTONES (Entrada / Almuerzo / Salida)
+        function registerLiveAction(action) {
+            const now = new Date();
+            const dateStr = formatDateKey(now);
+            const timeStr = formatTimeKey(now);
+
+            if (action === 'checkin') {
+                const exists = attendanceRecords.find(r => r.date === dateStr);
+                if (exists && !confirm('Ya existe un registro para la fecha de hoy en tu historial. ¿Deseas iniciar una nueva marcación?')) {
+                    return;
+                }
+
+                activeRecord = {
+                    id: Date.now(),
+                    date: dateStr,
+                    checkin: timeStr,
+                    lunchStart: null,
+                    lunchEnd: null,
+                    checkout: null,
+                    lunchMinutes: 0
+                };
+                showToast('¡Entrada marcada correctamente!', 'success');
+            } 
+            else if (action === 'checkout' && activeRecord) {
+                if (activeRecord.lunchStart && !activeRecord.lunchEnd) {
+                    activeRecord.lunchEnd = timeStr;
+                    activeRecord.lunchMinutes += getMinutesDiff(activeRecord.lunchStart, timeStr);
+                }
+
+                activeRecord.checkout = timeStr;
+                const workedMins = calculateWorkMinutes(activeRecord);
+                activeRecord.workedMinutes = workedMins;
+                activeRecord.overtimeMinutes = Math.max(0, workedMins - (8 * 60));
+
+                attendanceRecords = attendanceRecords.filter(r => r.date !== activeRecord.date);
+                attendanceRecords.unshift(activeRecord);
+                
+                activeRecord = null;
+                showToast('¡Salida marcada! Jornada del día guardada.', 'success');
+            }
+
+            saveData();
+            renderAll();
+        }
+
+        function toggleLiveLunch() {
+            if (!activeRecord) return;
+            const timeStr = formatTimeKey(new Date());
+
+            if (!activeRecord.lunchStart || (activeRecord.lunchStart && activeRecord.lunchEnd)) {
+                activeRecord.lunchStart = timeStr;
+                activeRecord.lunchEnd = null;
+                showToast('Pausa de almuerzo iniciada', 'info');
+            } else if (activeRecord.lunchStart && !activeRecord.lunchEnd) {
+                activeRecord.lunchEnd = timeStr;
+                activeRecord.lunchMinutes += getMinutesDiff(activeRecord.lunchStart, timeStr);
+                showToast('Fin de pausa de almuerzo', 'info');
+            }
+
+            saveData();
+            renderAll();
+        }
+
+        // 3. GENERADOR DE HISTORIAL RETROACTIVO (28 Ago - 1 Oct)
+        function handleRetroactiveGenerate(e) {
+            e.preventDefault();
+            const startStr = document.getElementById('retro-start-date').value;
+            const endStr = document.getElementById('retro-end-date').value;
+            const checkin = document.getElementById('retro-checkin').value;
+            const checkout = document.getElementById('retro-checkout').value;
+            const lunchStart = document.getElementById('retro-lunch-start').value || null;
+            const lunchEnd = document.getElementById('retro-lunch-end').value || null;
+
+            if (!startStr || !endStr) return;
+
+            let currentDate = new Date(startStr + 'T00:00:00');
+            const endDate = new Date(endStr + 'T00:00:00');
+
+            let generatedCount = 0;
+
+            let lunchMins = 0;
+            if (lunchStart && lunchEnd) {
+                lunchMins = getMinutesDiff(lunchStart, lunchEnd);
+            }
+
+            while (currentDate <= endDate) {
+                const dayOfWeek = currentDate.getDay();
+                // Excluir Sábados (6) y Domingos (0)
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    const dateKey = formatDateKey(currentDate);
+
+                    const tempRecord = { checkin, checkout, lunchStart, lunchEnd, lunchMinutes: lunchMins };
+                    const workedMins = calculateWorkMinutes(tempRecord);
+                    const overtimeMins = Math.max(0, workedMins - (8 * 60));
+
+                    const newRecord = {
+                        id: Date.now() + Math.random(),
+                        date: dateKey,
+                        checkin,
+                        checkout,
+                        lunchStart,
+                        lunchEnd,
+                        lunchMinutes: lunchMins,
+                        workedMinutes: workedMins,
+                        overtimeMinutes: overtimeMins
+                    };
+
+                    // Reemplazar si ya existe la fecha o agregar
+                    attendanceRecords = attendanceRecords.filter(r => r.date !== dateKey);
+                    attendanceRecords.push(newRecord);
+                    generatedCount++;
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Ordenar por fecha descendente
+            attendanceRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            saveData();
+            renderAll();
+            closeRetroactiveModal();
+            showToast(`¡Se generaron ${generatedCount} días laborales en tu historial!`, 'success');
+        }
+
+        // 4. RENDERIZADO GLOBAL
+        function renderAll() {
+            renderProgressAndGoals();
+            renderButtonsAndStatus();
+            renderTable();
+        }
+
+        function renderProgressAndGoals() {
+            let totalMins = 0;
+            attendanceRecords.forEach(r => totalMins += (r.workedMinutes || 0));
+
+            const totalHours = (totalMins / 60).toFixed(1);
+            document.getElementById('total-completed-hours').innerText = totalHours;
+            document.getElementById('target-hours-display').innerText = `/ ${targetHours.toFixed(1)} hrs`;
+            
+            const remainingHours = Math.max(0, targetHours - (totalMins / 60)).toFixed(1);
+            document.getElementById('remaining-hours-display').innerText = `${remainingHours} h`;
+            document.getElementById('total-days-worked').innerText = `${attendanceRecords.length} días`;
+
+            const percentage = Math.min(100, Math.round((totalMins / 60 / targetHours) * 100));
+            document.getElementById('target-progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-percentage-badge').innerText = `${percentage}%`;
+        }
+
+        function renderButtonsAndStatus() {
+            const btnCheckin = document.getElementById('btn-checkin');
+            const btnLunch = document.getElementById('btn-lunch');
+            const btnCheckout = document.getElementById('btn-checkout');
+            const statusBadge = document.getElementById('status-badge');
+
+            const labelLunch = document.getElementById('label-lunch');
+            const dispCheckin = document.getElementById('disp-checkin-time');
+            const dispLunch = document.getElementById('disp-lunch-time');
+            const dispCheckout = document.getElementById('disp-checkout-time');
+
+            if (!activeRecord) {
+                btnCheckin.disabled = false;
+                btnLunch.disabled = true;
+                btnCheckout.disabled = true;
+
+                labelLunch.innerText = 'Inicio Almuerzo';
+                dispCheckin.innerText = '--:--';
+                dispLunch.innerText = '--:--';
+                dispCheckout.innerText = '--:--';
+
+                statusBadge.className = "px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1.5";
+                statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span> Sin jornada activa hoy`;
+
+                document.getElementById('live-today-worked').innerText = '00:00';
+                document.getElementById('live-today-lunch').innerText = '00:00';
+                document.getElementById('live-today-overtime').innerText = '00:00';
+            } else {
+                btnCheckin.disabled = true;
+                btnLunch.disabled = false;
+                btnCheckout.disabled = false;
+
+                dispCheckin.innerText = activeRecord.checkin || '--:--';
+
+                if (activeRecord.lunchStart && !activeRecord.lunchEnd) {
+                    labelLunch.innerText = 'Fin Almuerzo';
+                    dispLunch.innerText = `Desde ${activeRecord.lunchStart}`;
+
+                    statusBadge.className = "px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5";
+                    statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> En descanso / almuerzo`;
+                } else {
+                    labelLunch.innerText = activeRecord.lunchEnd ? 'Almuerzo Completado' : 'Inicio Almuerzo';
+                    dispLunch.innerText = activeRecord.lunchStart ? `${activeRecord.lunchStart} - ${activeRecord.lunchEnd}` : '--:--';
+
+                    statusBadge.className = "px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5";
+                    statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Jornada activa en curso`;
+                }
+
+                dispCheckout.innerText = '--:--';
+            }
+        }
+
+        function calculateLiveMetrics(nowDate) {
+            if (!activeRecord) return;
+            const currentStr = formatTimeKey(nowDate);
+
+            let workedMins = 0;
+            let lunchMins = activeRecord.lunchMinutes || 0;
+
+            const checkinMins = timeToMins(activeRecord.checkin);
+            const currentMins = timeToMins(currentStr);
+
+            if (activeRecord.lunchStart && !activeRecord.lunchEnd) {
+                const liveLunchMins = Math.max(0, currentMins - timeToMins(activeRecord.lunchStart));
+                lunchMins += liveLunchMins;
+                workedMins = Math.max(0, timeToMins(activeRecord.lunchStart) - checkinMins - (activeRecord.lunchMinutes || 0));
+            } else {
+                workedMins = Math.max(0, currentMins - checkinMins - lunchMins);
+            }
+
+            document.getElementById('live-today-worked').innerText = minsToHHMM(workedMins);
+            document.getElementById('live-today-lunch').innerText = minsToHHMM(lunchMins);
+            
+            const overtime = Math.max(0, workedMins - (8 * 60));
+            document.getElementById('live-today-overtime').innerText = minsToHHMM(overtime);
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('attendance-tbody');
+            const emptyState = document.getElementById('empty-state');
+            tbody.innerHTML = '';
+
+            if (attendanceRecords.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            attendanceRecords.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition border-b border-slate-800/50";
+
+                const dateObj = new Date(r.date + 'T00:00:00');
+                const dayName = DAYS_ES[dateObj.getDay()];
+
+                const lunchText = r.lunchStart ? `${r.lunchStart} - ${r.lunchEnd || 'N/A'}` : '<span class="text-slate-600">Sin pausa</span>';
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 font-bold text-white">${formatDisplayDate(r.date)}</td>
+                    <td class="py-3.5 px-4 font-sans font-medium text-slate-400 text-xs">${dayName}</td>
+                    <td class="py-3.5 px-4"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">${r.checkin}</span></td>
+                    <td class="py-3.5 px-4 text-slate-400">${lunchText}</td>
+                    <td class="py-3.5 px-4"><span class="px-2 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded">${r.checkout || '--:--'}</span></td>
+                    <td class="py-3.5 px-4 text-center font-bold text-white">${minsToHHMM(r.workedMinutes || 0)}</td>
+                    <td class="py-3.5 px-4 text-center ${r.overtimeMinutes > 0 ? 'text-indigo-400 font-bold' : 'text-slate-600'}">${minsToHHMM(r.overtimeMinutes || 0)}</td>
+                    <td class="py-3.5 px-4 text-right space-x-1 font-sans">
+                        <button onclick="editRecord(${r.id})" class="p-1.5 text-slate-400 hover:text-indigo-400 rounded hover:bg-slate-800" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteRecord(${r.id})" class="p-1.5 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 5. EDICIÓN Y REGISTRO MANUAL
+        function openManualModal() {
+            document.getElementById('manual-modal-title').innerText = "Añadir / Editar Día";
+            document.getElementById('edit-id').value = "";
+            document.getElementById('manual-date').value = formatDateKey(new Date());
+            document.getElementById('manual-checkin').value = "08:00";
+            document.getElementById('manual-checkout').value = "14:00";
+            document.getElementById('manual-lunch-start').value = "";
+            document.getElementById('manual-lunch-end').value = "";
+
+            document.getElementById('manual-modal').classList.remove('hidden');
+        }
+
+        function closeManualModal() { document.getElementById('manual-modal').classList.add('hidden'); }
+        function openRetroactiveModal() { document.getElementById('retroactive-modal').classList.remove('hidden'); }
+        function closeRetroactiveModal() { document.getElementById('retroactive-modal').classList.add('hidden'); }
+        function openTargetModal() { 
+            document.getElementById('target-hours-input').value = targetHours;
+            document.getElementById('target-modal').classList.remove('hidden'); 
+        }
+        function closeTargetModal() { document.getElementById('target-modal').classList.add('hidden'); }
+
+        function saveTargetHours() {
+            const val = parseFloat(document.getElementById('target-hours-input').value);
+            if (val && val > 0) {
+                targetHours = val;
+                localStorage.setItem('internshipTargetHours', targetHours);
+                renderProgressAndGoals();
+                closeTargetModal();
+                showToast('Meta de horas actualizada', 'success');
+            }
+        }
+
+        function handleManualSave(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-id').value;
+            const date = document.getElementById('manual-date').value;
+            const checkin = document.getElementById('manual-checkin').value;
+            const checkout = document.getElementById('manual-checkout').value;
+            const lunchStart = document.getElementById('manual-lunch-start').value || null;
+            const lunchEnd = document.getElementById('manual-lunch-end').value || null;
+
+            let lunchMins = 0;
+            if (lunchStart && lunchEnd) lunchMins = getMinutesDiff(lunchStart, lunchEnd);
+
+            const tempRec = { checkin, checkout, lunchStart, lunchEnd, lunchMinutes: lunchMins };
+            const workedMins = calculateWorkMinutes(tempRec);
+            const overtimeMins = Math.max(0, workedMins - (8 * 60));
+
+            const record = {
+                id: editId ? parseFloat(editId) : Date.now(),
+                date,
+                checkin,
+                checkout,
+                lunchStart,
+                lunchEnd,
+                lunchMinutes: lunchMins,
+                workedMinutes: workedMins,
+                overtimeMinutes: overtimeMins
+            };
+
+            if (editId) {
+                const idx = attendanceRecords.findIndex(r => r.id === parseFloat(editId));
+                if (idx !== -1) attendanceRecords[idx] = record;
+            } else {
+                attendanceRecords = attendanceRecords.filter(r => r.date !== date);
+                attendanceRecords.unshift(record);
+            }
+
+            attendanceRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            saveData();
+            renderAll();
+            closeManualModal();
+            showToast('Día guardado correctamente en tu historial', 'success');
+        }
+
+        function editRecord(id) {
+            const r = attendanceRecords.find(item => item.id === id);
+            if (!r) return;
+
+            document.getElementById('manual-modal-title').innerText = "Editar Registro de Asistencia";
+            document.getElementById('edit-id').value = r.id;
+            document.getElementById('manual-date').value = r.date;
+            document.getElementById('manual-checkin').value = r.checkin || '';
+            document.getElementById('manual-checkout').value = r.checkout || '';
+            document.getElementById('manual-lunch-start').value = r.lunchStart || '';
+            document.getElementById('manual-lunch-end').value = r.lunchEnd || '';
+
+            document.getElementById('manual-modal').classList.remove('hidden');
+        }
+
+        function deleteRecord(id) {
+            if (confirm('¿Eliminar este registro del historial?')) {
+                attendanceRecords = attendanceRecords.filter(r => r.id !== id);
+                saveData();
+                renderAll();
+                showToast('Registro eliminado', 'info');
+            }
+        }
+
+        function confirmClearAll() {
+            if (confirm('⚠️️ ¿Estás seguro de vaciar todo tu historial de prácticas?')) {
+                attendanceRecords = [];
+                activeRecord = null;
+                saveData();
+                renderAll();
+                showToast('Historial vaciado', 'info');
+            }
+        }
+
+        // 6. EXPORTACIÓN Y BACKUPS
+        function exportToCSV() {
+            if (attendanceRecords.length === 0) {
+                showToast('No hay registros para exportar', 'error');
+                return;
+            }
+
+            let csv = "\uFEFFFecha;Día;Entrada;Inicio Almuerzo;Fin Almuerzo;Salida;Horas Totales;Horas Extra\n";
+            
+            [...attendanceRecords].reverse().forEach(r => {
+                const dateObj = new Date(r.date + 'T00:00:00');
+                const dayName = DAYS_ES[dateObj.getDay()];
+                const workedH = (r.workedMinutes / 60).toFixed(2).replace('.', ',');
+                const overtimeH = (r.overtimeMinutes / 60).toFixed(2).replace('.', ',');
+
+                csv += `${r.date};${dayName};${r.checkin || ''};${r.lunchStart || ''};${r.lunchEnd || ''};${r.checkout || ''};${workedH};${overtimeH}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Reporte_Practicas_Profesionales_${formatDateKey(new Date())}.csv`;
+            a.click();
+            showToast('Archivo CSV generado correctamente', 'success');
+        }
+
+        function exportJSONBackup() {
+            const data = {
+                targetHours,
+                attendanceRecords,
+                exportedAt: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Respaldo_Practicas_${formatDateKey(new Date())}.json`;
+            a.click();
+            showToast('Copia de seguridad JSON descargada', 'success');
+        }
+
+        function triggerImportJSON() { document.getElementById('json-input').click(); }
+
+        function importJSONBackup(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const parsed = JSON.parse(event.target.result);
+                    if (parsed.attendanceRecords && Array.isArray(parsed.attendanceRecords)) {
+                        attendanceRecords = parsed.attendanceRecords;
+                        if (parsed.targetHours) targetHours = parsed.targetHours;
+                        saveData();
+                        renderAll();
+                        showToast('Respaldo restaurado con éxito', 'success');
+                    } else {
+                        showToast('El archivo JSON no tiene un formato válido', 'error');
+                    }
+                } catch (err) {
+                    showToast('Error al leer el archivo JSON', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // AUXILIARES
+        function filterTable() {
+            const q = document.getElementById('table-search').value.toLowerCase();
+            const rows = document.querySelectorAll('#attendance-tbody tr');
+            rows.forEach(r => {
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+
+        function calculateWorkMinutes(rec) {
+            if (!rec.checkin || !rec.checkout) return 0;
+            const diff = timeToMins(rec.checkout) - timeToMins(rec.checkin);
+            return Math.max(0, diff - (rec.lunchMinutes || 0));
+        }
+
+        function getMinutesDiff(start, end) {
+            if (!start || !end) return 0;
+            return Math.max(0, timeToMins(end) - timeToMins(start));
+        }
+
+        function timeToMins(str) {
+            if (!str) return 0;
+            const [h, m] = str.split(':').map(Number);
+            return (h * 60) + m;
+        }
+
+        function minsToHHMM(mins) {
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function formatDateKey(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        function formatTimeKey(d) {
+            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function formatDisplayDate(dateStr) {
+            if (!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function saveData() {
+            localStorage.setItem('internshipRecords', JSON.stringify(attendanceRecords));
+            localStorage.setItem('internshipActiveRecord', JSON.stringify(activeRecord));
+            localStorage.setItem('internshipTargetHours', targetHours);
+        }
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.innerText = msg;
+            toastIcon.className = type === 'success' 
+                ? 'fa-solid fa-circle-check text-emerald-400 text-base' 
+                : (type === 'error' ? 'fa-solid fa-circle-xmark text-rose-400 text-base' : 'fa-solid fa-circle-info text-sky-400 text-base');
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3200);
+        }
+    </script>
+</body>
+</html>
